@@ -147,7 +147,7 @@ function App() {
                 </>
               )}
 
-              {partie?.termine && <GameStatus partie={partie} reponse={reponse} />}
+              {partie?.termine && <GameStatus partie={partie} reponse={reponse} date={defiDate} />}
             </>
           )}
         </>

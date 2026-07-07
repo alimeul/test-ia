@@ -164,6 +164,24 @@ body {
   margin-top: 0.5rem;
 }
 
+.share-preview {
+  margin-top: 0.5rem;
+}
+
+.share-text {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text);
+  text-align: center;
+  white-space: pre;
+  user-select: all;
+}
+
 .feedback {
   width: 100%;
   padding: 0.5rem;

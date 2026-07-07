@@ -1,14 +1,32 @@
 import { useState } from "react";
 
-function GameStatus({ partie, reponse }) {
+function GameStatus({ partie, reponse, date }) {
   const [copied, setCopied] = useState(false);
 
+  function buildGrid() {
+    const max = 5;
+    const used = partie.essais_effectues;
+    const won = partie.gagne;
+    const cells = [];
+    for (let i = 0; i < used; i++) {
+      cells.push(i === used - 1 && won ? "🟩" : "⬛");
+    }
+    return cells.join("");
+  }
+
   function buildShareText() {
-    const score = partie.gagne ? partie.score : "X";
-    const attempts = partie.essais_effectues;
-    const hints = partie.indices_reveles;
-    const emoji = partie.gagne ? ":wikidle_win:" : ":wikidle_lose:";
-    return `Wikidle - ${partie.gagne ? "Gagné" : "Perdu"} !\nScore: ${score}\nEssais: ${attempts}\nIndices: ${hints}\n\nwikidle.app`;
+    const dateStr = date ?? new Date().toISOString().slice(0, 10);
+    const grid = buildGrid();
+    const hints = "🔍".repeat(partie.indices_reveles) || "🔍0";
+    const emoji = partie.gagne ? "🎉" : "😞";
+    return [
+      `Wikidle #${dateStr}`,
+      `${emoji} ${partie.gagne ? "Gagné" : "Perdu"} !`,
+      `${grid}  ${partie.essais_effectues}/${5}  ${hints}`,
+      `Score: ${partie.score}`,
+      "",
+      "wikidle.app",
+    ].join("\n");
   }
 
   async function handleShare() {
@@ -42,6 +60,9 @@ function GameStatus({ partie, reponse }) {
           <p>Réessayez demain !</p>
         </div>
       )}
+      <div className="share-preview">
+        <pre className="share-text">{buildShareText()}</pre>
+      </div>
       <button className="btn btn-share" onClick={handleShare}>
         {copied ? "Copié !" : "Partager mon résultat"}
       </button>
