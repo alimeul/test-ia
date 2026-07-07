@@ -68,6 +68,23 @@ def get_all_titles(db_path: str) -> set[str]:
         return set(session.exec(statement).all())
 
 
+def get_article_by_id(db_path: str, article_id: int) -> dict | None:
+    """Récupère un article par son ID."""
+    engine = _get_engine(db_path)
+    with Session(engine) as session:
+        statement = select(Article).where(Article.id == article_id)
+        article = session.exec(statement).first()
+        if article is None:
+            return None
+        return {
+            "pageid": article.id,
+            "titre": article.titre,
+            "contenu": article.contenu_original,
+            "categorie": article.categorie,
+            "popularite": article.popularite,
+        }
+
+
 def get_statistics(db_path: str) -> dict:
     """Retourne des statistiques sur les articles stockés.
 

@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     POPULARITE_MIN: int = 50
     FETCH_COUNT: int = 50
 
+    CAVIARDAGE_TAUX_DEFAUT: float = 0.5
+    CAVIARDAGE_MASQUER_TITRE: bool = True
+    CAVIARDAGE_MASQUER_ENTITES: bool = True
+    SPACY_MODEL: str = "fr_core_news_sm"
+
     SENSITIVE_CATEGORIES: list[str] = [
         "Mort",
         "Décès",

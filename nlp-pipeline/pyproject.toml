@@ -8,6 +8,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "sqlmodel>=0.0.22",
     "pydantic-settings>=2.0.0",
+    "spacy>=3.8.0",
 ]
 
 [project.optional-dependencies]
