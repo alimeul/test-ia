@@ -8,10 +8,16 @@ import {
 import ArticleView from "./components/ArticleView";
 import GuessForm from "./components/GuessForm";
 import GameStatus from "./components/GameStatus";
+import History from "./components/History";
+import Stats from "./components/Stats";
 import "./App.css";
 
+const PAGES = { PLAY: "play", HISTORY: "history", STATS: "stats" };
+
 function App() {
+  const [page, setPage] = useState(PAGES.PLAY);
   const [defi, setDefi] = useState(null);
+  const [defiDate, setDefiDate] = useState(null);
   const [partie, setPartie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,16 +25,28 @@ function App() {
   const [reponse, setReponse] = useState(null);
 
   const refreshPartie = useCallback(() => {
-    fetchPartie()
+    fetchPartie(defiDate)
       .then(setPartie)
       .catch(() => {});
-  }, []);
+  }, [defiDate]);
 
-  useEffect(() => {
-    fetchDefi()
+  function loadDefi(date) {
+    setLoading(true);
+    setError(null);
+    setDefi(null);
+    setPartie(null);
+    setIndicesText("");
+    setReponse(null);
+    setDefiDate(date);
+
+    fetchDefi(date)
       .then(setDefi)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    loadDefi(null);
   }, []);
 
   useEffect(() => {
@@ -37,7 +55,7 @@ function App() {
   }, [defi, refreshPartie]);
 
   async function handleGuess(titre) {
-    const resultat = await proposerTitre(titre);
+    const resultat = await proposerTitre(titre, defiDate);
     if (resultat.essais_restants === 0 || resultat.gagne) {
       setReponse(resultat.titre ?? null);
     }
@@ -47,7 +65,7 @@ function App() {
 
   async function handleReveler() {
     if (partie?.termine) return;
-    const resultat = await revelerIndice();
+    const resultat = await revelerIndice(defiDate);
     if (resultat.indice) {
       setIndicesText(
         (prev) => (prev ? `${prev}, ${resultat.indice}` : resultat.indice),
@@ -56,44 +74,84 @@ function App() {
     refreshPartie();
   }
 
-  if (loading) return <main className="app"><p className="loading">Chargement…</p></main>;
-  if (error) return <main className="app"><p className="error">{error}</p></main>;
-  if (!defi) return <main className="app"><p className="error">Aucun défi disponible</p></main>;
+  function handlePlayDate(date) {
+    loadDefi(date);
+    setPage(PAGES.PLAY);
+  }
+
+  const isToday = !defiDate;
 
   return (
     <main className="app">
       <header className="header">
         <h1>Wikidle</h1>
-        <p className="subtitle">Devinez l'article Wikipédia du jour !</p>
-        {defi.difficulte?.score != null && (
-          <span className="difficulty">
-            Difficulté : {Number(defi.difficulte.score).toFixed(1)}/10
-          </span>
-        )}
+        <nav className="nav">
+          <button
+            className={`nav-btn${page === PAGES.PLAY ? " active" : ""}`}
+            onClick={() => setPage(PAGES.PLAY)}
+          >
+            Jouer
+          </button>
+          <button
+            className={`nav-btn${page === PAGES.HISTORY ? " active" : ""}`}
+            onClick={() => setPage(PAGES.HISTORY)}
+          >
+            Historique
+          </button>
+          <button
+            className={`nav-btn${page === PAGES.STATS ? " active" : ""}`}
+            onClick={() => setPage(PAGES.STATS)}
+          >
+            Statistiques
+          </button>
+        </nav>
       </header>
 
-      <ArticleView texte={defi.texte_caviarde} />
+      {page === PAGES.HISTORY && <History onPlayDate={handlePlayDate} />}
 
-      {indicesText && (
-        <div className="indice-box">
-          <strong>Indice :</strong> {indicesText}
-        </div>
-      )}
+      {page === PAGES.STATS && <Stats />}
 
-      {!partie?.termine && (
+      {page === PAGES.PLAY && (
         <>
-          <GuessForm onGuess={handleGuess} essaisRestants={partie?.essais_restants ?? 5} />
-          <button
-            className="btn btn-reveal"
-            onClick={handleReveler}
-            disabled={partie && partie.indices_restants <= 0}
-          >
-            Révéler un mot ({partie?.indices_restants ?? defi.nb_indices_disponibles})
-          </button>
+          {loading && <p className="loading">Chargement…</p>}
+          {error && <p className="error">{error}</p>}
+          {defi && (
+            <>
+              <p className="defi-date">
+                {isToday ? "Défi du jour" : `Défi du ${defiDate}`}
+                {defi.difficulte?.score != null && (
+                  <span className="difficulty">
+                    Difficulté : {Number(defi.difficulte.score).toFixed(1)}/10
+                  </span>
+                )}
+              </p>
+
+              <ArticleView texte={defi.texte_caviarde} />
+
+              {indicesText && (
+                <div className="indice-box">
+                  <strong>Indice :</strong> {indicesText}
+                </div>
+              )}
+
+              {!partie?.termine && (
+                <>
+                  <GuessForm onGuess={handleGuess} essaisRestants={partie?.essais_restants ?? 5} />
+                  <button
+                    className="btn btn-reveal"
+                    onClick={handleReveler}
+                    disabled={partie && partie.indices_restants <= 0}
+                  >
+                    Révéler un mot ({partie?.indices_restants ?? defi.nb_indices_disponibles})
+                  </button>
+                </>
+              )}
+
+              {partie?.termine && <GameStatus partie={partie} reponse={reponse} />}
+            </>
+          )}
         </>
       )}
-
-      {partie?.termine && <GameStatus partie={partie} reponse={reponse} />}
     </main>
   );
 }

@@ -10,6 +10,11 @@ class DefiLancement(BaseModel):
     difficulte: dict
 
 
+class DefiResume(BaseModel):
+    date: str
+    difficulte: float
+
+
 class ProposerTitreRequest(BaseModel):
     titre_propose: str
 

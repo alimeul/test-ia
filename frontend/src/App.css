@@ -227,6 +227,125 @@ body {
   border: 0;
 }
 
+.nav {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.nav-btn {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn.active {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+
+.nav-btn:hover:not(.active) {
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+
+.defi-date {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 2rem;
+}
+
+.history-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.history-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.history-date {
+  font-weight: 600;
+  min-width: 7em;
+}
+
+.history-difficulty {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.btn-small {
+  background: var(--accent);
+  color: #000;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.7rem;
+}
+
+.stats h2,
+.history h2 {
+  text-align: center;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  color: var(--text-dim);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 0.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 @media (max-width: 480px) {
   .app {
     padding: 0.75rem;
@@ -240,5 +359,8 @@ body {
   }
   .guess-form input {
     font-size: 0.9rem;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
