@@ -1,9 +1,19 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import defis
+from app.db import init_db
+from app.routers import defis, stats, tentatives
 
-app = FastAPI(title="Wikidle API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title="Wikidle API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,6 +24,8 @@ app.add_middleware(
 )
 
 app.include_router(defis.router, prefix="/api")
+app.include_router(tentatives.router, prefix="/api")
+app.include_router(stats.router, prefix="/api")
 
 
 @app.get("/")
