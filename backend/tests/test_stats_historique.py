@@ -38,7 +38,18 @@ def db_multi(tmp_path: Path):
             defi = Defi(
                 article_id=article.id,
                 date_publication=d,
-                texte_caviarde=json.dumps({"texte": "███ est la capitale.", "tokens": []}),
+                texte_caviarde=json.dumps({
+                    "texte": "█████ est la capitale de la ██████.",
+                    "tokens": [
+                        {"texte": "Paris", "masque": True, "pos": "PROPN", "ws": " "},
+                        {"texte": "est", "masque": False, "pos": "AUX", "ws": " "},
+                        {"texte": "la", "masque": False, "pos": "DET", "ws": " "},
+                        {"texte": "capitale", "masque": False, "pos": "NOUN", "ws": " "},
+                        {"texte": "de", "masque": False, "pos": "ADP", "ws": " "},
+                        {"texte": "la", "masque": False, "pos": "DET", "ws": " "},
+                        {"texte": "France", "masque": True, "pos": "PROPN", "ws": "."},
+                    ],
+                }),
                 score_difficulte=5.0,
                 indices=json.dumps(["France"]),
             )

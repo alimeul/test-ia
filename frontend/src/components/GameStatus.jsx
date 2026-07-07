@@ -4,14 +4,15 @@ function GameStatus({ partie, reponse, date }) {
   const [copied, setCopied] = useState(false);
 
   function buildGrid() {
-    const max = 5;
     const used = partie.essais_effectues;
     const won = partie.gagne;
+    const total = partie.mots_titre?.length ?? 1;
+    const found = partie.mots_titre_trouves?.length ?? 0;
     const cells = [];
     for (let i = 0; i < used; i++) {
       cells.push(i === used - 1 && won ? "🟩" : "⬛");
     }
-    return cells.join("");
+    return `${cells.join("")}  ${found}/${total}`;
   }
 
   function buildShareText() {

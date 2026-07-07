@@ -23,10 +23,14 @@ function App() {
   const [error, setError] = useState(null);
   const [indicesText, setIndicesText] = useState("");
   const [reponse, setReponse] = useState(null);
+  const [motsTitre, setMotsTitre] = useState([]);
+  const [motsTitreTrouves, setMotsTitreTrouves] = useState([]);
 
   const refreshPartie = useCallback(() => {
     fetchPartie(defiDate)
       .then((p) => {
+        if (p.mots_titre) setMotsTitre(p.mots_titre);
+        if (p.mots_titre_trouves) setMotsTitreTrouves(p.mots_titre_trouves);
         if (p.texte_mis_a_jour) {
           setDefi((prev) => ({ ...prev, texte_caviarde: p.texte_mis_a_jour }));
         }
@@ -42,10 +46,15 @@ function App() {
     setPartie(null);
     setIndicesText("");
     setReponse(null);
+    setMotsTitre([]);
+    setMotsTitreTrouves([]);
     setDefiDate(date);
 
     fetchDefi(date)
-      .then(setDefi)
+      .then((d) => {
+        if (d.mots_titre) setMotsTitre(d.mots_titre);
+        setDefi(d);
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }
@@ -59,12 +68,17 @@ function App() {
     refreshPartie();
   }, [defi, refreshPartie]);
 
-  async function handleGuess(titre) {
-    const resultat = await proposerTitre(titre, defiDate);
+  async function handleGuess(mot) {
+    const resultat = await proposerTitre(mot, defiDate);
+    if (resultat.mots_titre) setMotsTitre(resultat.mots_titre);
+    if (resultat.mots_titre_trouves) setMotsTitreTrouves(resultat.mots_titre_trouves);
     if (resultat.texte_mis_a_jour) {
       setDefi((prev) => ({ ...prev, texte_caviarde: resultat.texte_mis_a_jour }));
     }
-    if (resultat.essais_restants === 0 || resultat.gagne) {
+    if (resultat.gagne) {
+      setReponse(resultat.titre ?? null);
+    }
+    if (resultat.essais_restants === 0 && !resultat.gagne) {
       setReponse(resultat.titre ?? null);
     }
     refreshPartie();
@@ -88,6 +102,9 @@ function App() {
   }
 
   const isToday = !defiDate;
+  const titreProgress = motsTitre.length > 0
+    ? `${motsTitreTrouves.length}/${motsTitre.length}`
+    : null;
 
   return (
     <main className="app">
@@ -136,6 +153,28 @@ function App() {
                   </span>
                 )}
               </p>
+
+              {titreProgress && !partie?.termine && (
+                <div className="titre-progress" role="status" aria-live="polite">
+                  Mots du titre trouvés : {titreProgress}
+                  <div className="titre-bar">
+                    <div
+                      className="titre-bar-fill"
+                      style={{ width: `${(motsTitreTrouves.length / motsTitre.length) * 100}%` }}
+                    />
+                  </div>
+                  <div className="titre-mots">
+                    {motsTitre.map((mt) => (
+                      <span
+                        key={mt}
+                        className={`titre-mot${motsTitreTrouves.includes(mt) ? " found" : ""}`}
+                      >
+                        {motsTitreTrouves.includes(mt) ? mt : "?".repeat(mt.length)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <ArticleView texte={defi.texte_caviarde} />
 

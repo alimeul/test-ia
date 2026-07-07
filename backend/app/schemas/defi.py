@@ -8,6 +8,7 @@ class DefiLancement(BaseModel):
     texte_caviarde: str
     nb_indices_disponibles: int
     difficulte: dict
+    mots_titre: list[str] = []
 
 
 class DefiResume(BaseModel):
@@ -26,6 +27,8 @@ class ProposerTitreResponse(BaseModel):
     titre: str | None = None
     mot_revele: str | None = None
     texte_mis_a_jour: str | None = None
+    mots_titre: list[str] = []
+    mots_titre_trouves: list[str] = []
 
 
 class RevelerIndiceRequest(BaseModel):
@@ -47,4 +50,6 @@ class PartieEtat(BaseModel):
     termine: bool
     score: int
     mots_reveles: list[str] = []
+    mots_titre: list[str] = []
+    mots_titre_trouves: list[str] = []
     texte_mis_a_jour: str | None = None

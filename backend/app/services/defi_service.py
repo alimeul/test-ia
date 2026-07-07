@@ -8,6 +8,25 @@ from app.models.article import Article
 from app.models.defi import Defi
 from app.models.partie import Partie
 
+_MOTS_GRAMMA: set[str] = {
+    "le", "la", "les", "l", "de", "du", "des", "d",
+    "un", "une", "ce", "cet", "cette", "ces",
+    "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses",
+    "notre", "votre", "leur", "nos", "vos", "leurs",
+    "au", "aux", "a", "en", "et", "ou", "sur", "dans", "par", "pour",
+    "avec", "sans", "chez", "vers", "depuis", "pendant",
+    "que", "qui", "dont", "ou", "ne", "pas", "plus",
+}
+
+
+def _extraire_mots_titre(titre: str) -> list[str]:
+    mots = set()
+    for part in titre.replace("-", " ").replace("'", " ").split():
+        mot = part.strip("'\"").lower()
+        if mot and mot not in _MOTS_GRAMMA and len(mot) > 1:
+            mots.add(mot)
+    return sorted(mots)
+
 
 def get_defi_by_date(session: Session, defi_date: date | None = None) -> Defi | None:
     if defi_date is None:
@@ -57,16 +76,15 @@ def _compute_score(essais: int, indices: int, max_essais: int) -> int:
     return max(0, score)
 
 
-def _normalize_titre(titre: str) -> str:
-    return titre.strip().lower()
-
-
 def _mots_dans_texte(texte_caviarde_json: str, mot: str) -> list[str]:
     data = json.loads(texte_caviarde_json)
     mot_low = mot.lower().strip()
     trouves = []
     for t in data["tokens"]:
-        if t["masque"] and t["texte"].lower() == mot_low:
+        if not t["masque"]:
+            continue
+        t_low = t["texte"].lower()
+        if t_low == mot_low or (len(mot_low) >= 3 and mot_low in t_low):
             trouves.append(t["texte"])
     return trouves
 
@@ -75,12 +93,12 @@ def check_answer(
     session: Session,
     defi: Defi,
     session_id: str,
-    titre_propose: str,
+    mot_propose: str,
 ) -> dict[str, Any]:
     partie = get_ou_creer_partie(session, defi, session_id)
     if partie.termine:
         return {
-            "correct": partie.gagne,
+            "correct": False,
             "essais_restants": 0,
             "gagne": partie.gagne,
             "titre": None,
@@ -91,38 +109,32 @@ def check_answer(
     if article is None:
         raise RuntimeError("Article introuvable pour ce défi")
 
-    # Check if it's the correct title
-    correct = _normalize_titre(titre_propose) == _normalize_titre(article.titre)
+    mots_titre = _extraire_mots_titre(article.titre)
+    mot_propre = mot_propose.strip()
 
-    if correct:
-        partie.essais_effectues += 1
-        partie.gagne = True
-        partie.termine = True
-        partie.score = _compute_score(
-            partie.essais_effectues, partie.indices_reveles, partie.max_essais
-        )
-        session.add(partie)
-        session.commit()
-        session.refresh(partie)
-        return {
-            "correct": True,
-            "essais_restants": max(0, partie.max_essais - partie.essais_effectues),
-            "gagne": True,
-            "titre": article.titre,
-        }
+    # Find matching tokens in text
+    mots_trouves = _mots_dans_texte(defi.texte_caviarde, mot_propre)
 
-    # Check if it's a word present in the masked text
-    mots_trouves = _mots_dans_texte(defi.texte_caviarde, titre_propose)
-    if mots_trouves and not partie.termine:
+    if mots_trouves:
         mots_reveles: list[str] = json.loads(partie.mots_reveles)
-        mot_normalise = titre_propose.strip().lower()
-        if mot_normalise not in {m.lower() for m in mots_reveles}:
+        if mot_propre.lower() not in {m.lower() for m in mots_reveles}:
             mots_reveles.append(mots_trouves[0])
 
         partie.essais_effectues += 1
         partie.mots_reveles = json.dumps(mots_reveles, ensure_ascii=False)
 
-        if partie.essais_effectues >= partie.max_essais:
+        # Check if all title words are now revealed
+        reveles_set = {m.lower() for m in mots_reveles}
+        mots_titre_trouves = [mt for mt in mots_titre if mt.lower() in reveles_set]
+        all_found = len(mots_titre_trouves) == len(mots_titre)
+
+        if all_found:
+            partie.gagne = True
+            partie.termine = True
+            partie.score = _compute_score(
+                partie.essais_effectues, partie.indices_reveles, partie.max_essais
+            )
+        elif partie.essais_effectues >= partie.max_essais:
             partie.termine = True
             partie.score = 0
 
@@ -133,15 +145,17 @@ def check_answer(
         texte_mis_a_jour = reconstruire_texte(defi.texte_caviarde, mots_reveles)
 
         return {
-            "correct": False,
+            "correct": all_found,
             "essais_restants": max(0, partie.max_essais - partie.essais_effectues),
-            "gagne": False,
-            "titre": None,
-            "mot_revele": titre_propose.strip(),
+            "gagne": all_found,
+            "titre": article.titre if (all_found or partie.termine) else None,
+            "mot_revele": mot_propre,
             "texte_mis_a_jour": texte_mis_a_jour,
+            "mots_titre": mots_titre,
+            "mots_titre_trouves": mots_titre_trouves,
         }
 
-    # Wrong guess (neither title nor word in text)
+    # Word not found in text — costs an attempt
     partie.essais_effectues += 1
     if partie.essais_effectues >= partie.max_essais:
         partie.termine = True
@@ -151,11 +165,18 @@ def check_answer(
     session.commit()
     session.refresh(partie)
 
+    reveles_set = {m.lower() for m in json.loads(partie.mots_reveles)}
+    mots_titre_trouves = [mt for mt in mots_titre if mt.lower() in reveles_set]
+
     return {
         "correct": False,
         "essais_restants": max(0, partie.max_essais - partie.essais_effectues),
         "gagne": False,
         "titre": article.titre if partie.termine else None,
+        "mot_revele": None,
+        "texte_mis_a_jour": None,
+        "mots_titre": mots_titre,
+        "mots_titre_trouves": mots_titre_trouves,
     }
 
 
@@ -197,7 +218,11 @@ def reconstruire_texte(texte_caviarde_json: str, mots_reveles: list[str]) -> str
     mots_set = {m.lower() for m in mots_reveles}
     parts = []
     for t in tokens:
-        if t["masque"] and t["texte"].lower() in mots_set:
+        t_low = t["texte"].lower()
+        should_reveal = t_low in mots_set or any(
+            len(m) >= 3 and m in t_low for m in mots_set
+        )
+        if t["masque"] and should_reveal:
             parts.append(t["texte"])
         elif t["masque"]:
             parts.append("\u2588" * len(t["texte"]))
@@ -209,7 +234,12 @@ def reconstruire_texte(texte_caviarde_json: str, mots_reveles: list[str]) -> str
 
 def get_partie_etat(session: Session, defi: Defi, session_id: str) -> dict[str, Any]:
     partie = get_ou_creer_partie(session, defi, session_id)
+    article = get_article_for_defi(session, defi)
     indices: list[str] = json.loads(defi.indices)
+    mots_titre = _extraire_mots_titre(article.titre) if article else []
+    mots_reveles = json.loads(partie.mots_reveles)
+    reveles_set = {m.lower() for m in mots_reveles}
+    mots_titre_trouves = [mt for mt in mots_titre if mt.lower() in reveles_set]
     return {
         "essais_effectues": partie.essais_effectues,
         "essais_restants": max(0, partie.max_essais - partie.essais_effectues),
@@ -218,5 +248,7 @@ def get_partie_etat(session: Session, defi: Defi, session_id: str) -> dict[str, 
         "gagne": partie.gagne,
         "termine": partie.termine,
         "score": partie.score,
-        "mots_reveles": json.loads(partie.mots_reveles),
+        "mots_reveles": mots_reveles,
+        "mots_titre": mots_titre,
+        "mots_titre_trouves": mots_titre_trouves,
     }

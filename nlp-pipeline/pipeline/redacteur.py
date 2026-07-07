@@ -101,7 +101,7 @@ def _generer_liste_indices(
 def rediger_texte(
     texte: str,
     titre: str,
-    taux_masquage: float = 0.5,
+    taux_masquage: float = 1.0,
     seed: int | None = None,
 ) -> dict[str, Any]:
     """Fonction principale de caviardage d'un article Wikipédia.
@@ -149,7 +149,6 @@ def rediger_texte(
 
     tokens_info: list[dict[str, Any]] = []
     indices_caviardables: list[int] = []
-    masques_forces: set[int] = set()
 
     for i, token in enumerate(doc):
         info: dict[str, Any] = {
@@ -169,32 +168,10 @@ def rediger_texte(
             continue
 
         info["masque"] = True
-        force = False
-
-        if (
-            token.lemma_.lower() in titre_lemmes
-            or token.text.lower() in titre_mots
-        ):
-            force = True
-
-        if not force:
-            t_lower = token.text.lower()
-            for tm in titre_mots:
-                if len(tm) >= 3 and (tm in t_lower or t_lower in tm):
-                    force = True
-                    break
-
-        if i in entite_spans:
-            force = True
-
-        if force:
-            masques_forces.add(i)
-
         indices_caviardables.append(i)
         tokens_info.append(info)
 
-    total_caviardables = len(indices_caviardables)
-    if total_caviardables == 0:
+    if not indices_caviardables:
         return {
             "texte_caviarde": texte,
             "tokens": tokens_info,
@@ -207,29 +184,14 @@ def rediger_texte(
             },
         }
 
-    n_deja_force = len(masques_forces)
-    n_total_masques = round(total_caviardables * taux_masquage)
-    n_a_choisir = max(0, min(n_total_masques - n_deja_force, total_caviardables - n_deja_force))
-
-    non_forces = [i for i in indices_caviardables if i not in masques_forces]
-    if n_a_choisir > 0 and non_forces:
-        choisis = set(random.sample(non_forces, n_a_choisir))
-    else:
-        choisis = set()
-
-    tokens_masques_idx: set[int] = set()
+    tokens_masques_idx = set(indices_caviardables)
     entites_masquees: set[int] = set()
-
     for i in indices_caviardables:
-        doit_masquer = i in masques_forces or i in choisis
-        tokens_info[i]["masque"] = doit_masquer
-        if doit_masquer:
-            tokens_masques_idx.add(i)
-            if i in entite_spans:
-                for ent_idx, ent in enumerate(doc.ents):
-                    if ent.start <= i < ent.end:
-                        entites_masquees.add(ent_idx)
-                        break
+        if i in entite_spans:
+            for ent_idx, ent in enumerate(doc.ents):
+                if ent.start <= i < ent.end:
+                    entites_masquees.add(ent_idx)
+                    break
 
     texte_caviarde = _construire_texte_caviarde(doc, tokens_info)
 

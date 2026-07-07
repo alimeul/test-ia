@@ -17,7 +17,9 @@ from app.schemas.defi import (
     RevelerIndiceResponse,
 )
 from app.services.defi_service import (
+    _extraire_mots_titre,
     check_answer,
+    get_article_for_defi,
     get_defi_by_date,
     get_ou_creer_partie,
     get_partie_etat,
@@ -34,6 +36,8 @@ def _build_defi_lancement(defi, session: Session | None = None, session_id: str 
     data = json.loads(defi.texte_caviarde)
     indices = json.loads(defi.indices)
     texte = data["texte"]
+    article = get_article_for_defi(session, defi) if session else None
+    mots_titre = _extraire_mots_titre(article.titre) if article else []
 
     if session_id and session:
         partie = get_ou_creer_partie(session, defi, session_id)
@@ -46,6 +50,7 @@ def _build_defi_lancement(defi, session: Session | None = None, session_id: str 
         texte_caviarde=texte,
         nb_indices_disponibles=min(len(indices), 10),
         difficulte={"score": defi.score_difficulte},
+        mots_titre=mots_titre,
     )
 
 
@@ -124,12 +129,14 @@ async def proposer_titre(
     if "erreur" in resultat:
         raise HTTPException(status_code=400, detail=resultat["erreur"])
     return ProposerTitreResponse(
-        correct=resultat["correct"],
+        correct=resultat.get("correct", False),
         essais_restants=resultat["essais_restants"],
-        gagne=resultat["gagne"],
+        gagne=resultat.get("gagne", False),
         titre=resultat.get("titre"),
         mot_revele=resultat.get("mot_revele"),
         texte_mis_a_jour=resultat.get("texte_mis_a_jour"),
+        mots_titre=resultat.get("mots_titre", []),
+        mots_titre_trouves=resultat.get("mots_titre_trouves", []),
     )
 
 
@@ -147,12 +154,14 @@ async def proposer_titre_date(
     if "erreur" in resultat:
         raise HTTPException(status_code=400, detail=resultat["erreur"])
     return ProposerTitreResponse(
-        correct=resultat["correct"],
+        correct=resultat.get("correct", False),
         essais_restants=resultat["essais_restants"],
-        gagne=resultat["gagne"],
+        gagne=resultat.get("gagne", False),
         titre=resultat.get("titre"),
         mot_revele=resultat.get("mot_revele"),
         texte_mis_a_jour=resultat.get("texte_mis_a_jour"),
+        mots_titre=resultat.get("mots_titre", []),
+        mots_titre_trouves=resultat.get("mots_titre_trouves", []),
     )
 
 

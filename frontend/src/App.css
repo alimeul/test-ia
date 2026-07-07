@@ -200,6 +200,50 @@ body {
   color: #e5989b;
 }
 
+.titre-progress {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.titre-bar {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  background: var(--mask-bg);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.titre-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.titre-mots {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.titre-mot {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.titre-mot.found {
+  color: var(--success);
+}
+
 .feedback-reveal {
   background: #1a2e3e;
   color: #89cff0;
