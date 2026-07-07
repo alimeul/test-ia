@@ -40,7 +40,7 @@ async def fetch_pageviews(title: str) -> int:
         "prop": "pageviews",
         "titles": title,
     }
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    async with httpx.AsyncClient(timeout=15.0, headers={"User-Agent": "Wikidle/1.0 (jeu quotidien; contact@wikidle.app)"}) as client:
         for attempt in range(2):
             try:
                 response = await client.get(API_URL, params=params)
@@ -66,7 +66,7 @@ async def fetch_article_detail(title: str) -> dict | None:
         pageid, titre, contenu, categories, categorie, popularite
     ou None si l'article n'existe pas.
     """
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    async with httpx.AsyncClient(timeout=15.0, headers={"User-Agent": "Wikidle/1.0 (jeu quotidien; contact@wikidle.app)"}) as client:
         results = await _fetch_articles_detail(client, [title])
         return results[0] if results else None
 
@@ -82,7 +82,8 @@ async def fetch_random_articles(count: int = 10) -> list[dict]:
         return []
 
     articles: list[dict] = []
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    headers = {"User-Agent": "Wikidle/1.0 (jeu quotidien; contact@wikidle.app)"}
+    async with httpx.AsyncClient(timeout=15.0, headers=headers) as client:
         for i in range(0, len(titles), 50):
             batch = titles[i : i + 50]
             batch_articles = await _fetch_articles_detail(client, batch)
@@ -100,7 +101,8 @@ async def _fetch_random_titles(count: int) -> list[str]:
         "rnnamespace": 0,
         "rnlimit": min(count, 500),
     }
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    headers = {"User-Agent": "Wikidle/1.0 (jeu quotidien; contact@wikidle.app)"}
+    async with httpx.AsyncClient(timeout=15.0, headers=headers) as client:
         for attempt in range(2):
             try:
                 response = await client.get(API_URL, params=params)
@@ -130,6 +132,7 @@ async def _fetch_articles_detail(
         "action": "query",
         "format": "json",
         "formatversion": 2,
+        "redirects": 1,
         "prop": "extracts|categories|pageprops|pageviews",
         "explaintext": 1,
         "exchars": 60000,
