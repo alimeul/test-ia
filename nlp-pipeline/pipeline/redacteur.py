@@ -157,6 +157,7 @@ def rediger_texte(
             "masque": False,
             "pos": token.pos_,
             "indice_index": None,
+            "ws": token.whitespace_,
         }
 
         if token.is_space or token.is_punct or token.pos_ in _POS_GRAMMATICAUX:

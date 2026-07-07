@@ -26,7 +26,12 @@ function App() {
 
   const refreshPartie = useCallback(() => {
     fetchPartie(defiDate)
-      .then(setPartie)
+      .then((p) => {
+        if (p.texte_mis_a_jour) {
+          setDefi((prev) => ({ ...prev, texte_caviarde: p.texte_mis_a_jour }));
+        }
+        setPartie(p);
+      })
       .catch(() => {});
   }, [defiDate]);
 
@@ -56,6 +61,9 @@ function App() {
 
   async function handleGuess(titre) {
     const resultat = await proposerTitre(titre, defiDate);
+    if (resultat.texte_mis_a_jour) {
+      setDefi((prev) => ({ ...prev, texte_caviarde: resultat.texte_mis_a_jour }));
+    }
     if (resultat.essais_restants === 0 || resultat.gagne) {
       setReponse(resultat.titre ?? null);
     }

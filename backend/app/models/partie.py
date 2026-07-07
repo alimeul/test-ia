@@ -14,4 +14,5 @@ class Partie(SQLModel, table=True):
     gagne: bool = Field(default=False)
     termine: bool = Field(default=False)
     score: int = Field(default=0)
+    mots_reveles: str = Field(default="[]")  # JSON list of words revealed by guessing
     date_partie: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

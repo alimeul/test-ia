@@ -12,7 +12,10 @@ function sessionId() {
 export { sessionId };
 
 export async function fetchDefi(date) {
-  const url = date ? `${BASE}/${date}` : `${BASE}/aujourdhui`;
+  const sid = sessionId();
+  const url = date
+    ? `${BASE}/${date}?session_id=${sid}`
+    : `${BASE}/aujourdhui?session_id=${sid}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("Aucun défi disponible");
   return res.json();

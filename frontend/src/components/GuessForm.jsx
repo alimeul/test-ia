@@ -15,10 +15,12 @@ function GuessForm({ onGuess, essaisRestants }) {
       const resultat = await onGuess(value.trim());
       if (resultat.correct) {
         setFeedback({ type: "win", text: "Bravo ! C'est la bonne réponse !" });
+      } else if (resultat.mot_revele) {
+        setFeedback({ type: "reveal", text: `« ${resultat.mot_revele} » révélé dans le texte !` });
       } else {
         setFeedback({ type: "miss", text: `Non, ce n'est pas "${value.trim()}".` });
       }
-      if (!resultat.correct && essaisRestants <= 1) {
+      if (!resultat.correct && resultat.essais_restants !== undefined && resultat.essais_restants <= 1) {
         setFeedback((prev) => ({
           ...prev,
           text: prev.text + " Plus d'essais !",

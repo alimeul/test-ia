@@ -24,6 +24,8 @@ class ProposerTitreResponse(BaseModel):
     essais_restants: int
     gagne: bool
     titre: str | None = None
+    mot_revele: str | None = None
+    texte_mis_a_jour: str | None = None
 
 
 class RevelerIndiceRequest(BaseModel):
@@ -44,3 +46,5 @@ class PartieEtat(BaseModel):
     gagne: bool
     termine: bool
     score: int
+    mots_reveles: list[str] = []
+    texte_mis_a_jour: str | None = None
