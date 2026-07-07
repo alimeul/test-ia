@@ -29,7 +29,7 @@ def get_defi_by_date_str(session: Session, date_str: str) -> Defi | None:
 
 def calculer_stats_session(session: Session, session_id: str) -> dict:
     statement = select(Partie).where(
-        Partie.session_id == session_id, Partie.termine == True
+        Partie.session_id == session_id, Partie.termine
     )
     parties = session.exec(statement).all()
 

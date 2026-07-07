@@ -45,10 +45,18 @@ def db_multi(tmp_path: Path):
             session.add(defi)
         session.commit()
 
-        session.add(Partie(defi_id=1, session_id="stats-test", essais_effectues=2, termine=True, gagne=True, score=800))
-        session.add(Partie(defi_id=1, session_id="stats-test-bad", essais_effectues=5, termine=True, gagne=False, score=0))
-        session.add(Partie(defi_id=2, session_id="stats-test", essais_effectues=1, termine=True, gagne=True, score=900))
-        session.add(Partie(defi_id=3, session_id="stats-test", essais_effectues=3, termine=True, gagne=True, score=650))
+        session.add(
+            Partie(defi_id=1, session_id="stats-test", essais_effectues=2, termine=True, gagne=True, score=800)
+        )
+        session.add(
+            Partie(defi_id=1, session_id="stats-test-bad", essais_effectues=5, termine=True, gagne=False, score=0)
+        )
+        session.add(
+            Partie(defi_id=2, session_id="stats-test", essais_effectues=1, termine=True, gagne=True, score=900)
+        )
+        session.add(
+            Partie(defi_id=3, session_id="stats-test", essais_effectues=3, termine=True, gagne=True, score=650)
+        )
         session.commit()
 
         yield session

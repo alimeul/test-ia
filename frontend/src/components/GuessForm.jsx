@@ -50,7 +50,9 @@ function GuessForm({ onGuess, essaisRestants }) {
         {sending ? "…" : "Proposer"}
       </button>
       {feedback && (
-        <p className={`feedback feedback-${feedback.type}`}>{feedback.text}</p>
+        <p className={`feedback feedback-${feedback.type}`} role="alert" aria-live="assertive">
+          {feedback.text}
+        </p>
       )}
     </form>
   );

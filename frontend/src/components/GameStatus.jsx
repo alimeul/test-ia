@@ -46,7 +46,7 @@ function GameStatus({ partie, reponse, date }) {
   }
 
   return (
-    <section className="game-status">
+    <section className="game-status" role="status" aria-live="polite">
       {partie.gagne ? (
         <div className="result win">
           <h2>Félicitations !</h2>

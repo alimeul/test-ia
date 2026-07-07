@@ -1,6 +1,9 @@
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlmodel import Session
 
 from app.db import get_session
@@ -22,6 +25,7 @@ from app.services.defi_service import (
 from app.services.stats_service import get_defi_by_date_str, get_historique_defis
 
 router = APIRouter(prefix="/defis", tags=["defis"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 def _build_defi_lancement(defi) -> DefiLancement:
@@ -45,19 +49,29 @@ def _get_defi_or_404(session: Session, date_str: str | None = None):
     return defi
 
 
-@router.get("/aujourdhui", response_model=DefiLancement)
+def _cached_json(content, max_age: int):
+    return JSONResponse(
+        content=content,
+        headers={"Cache-Control": f"public, max-age={max_age}, s-maxage={max_age}"},
+    )
+
+
+@router.get("/aujourdhui")
 async def defi_du_jour(session: Session = Depends(get_session)):
-    return _build_defi_lancement(_get_defi_or_404(session))
+    defi = _get_defi_or_404(session)
+    return _cached_json(_build_defi_lancement(defi).model_dump(mode="json"), 60)
 
 
-@router.get("/historique", response_model=list[DefiResume])
+@router.get("/historique")
 async def historique_defis(session: Session = Depends(get_session)):
-    return get_historique_defis(session)
+    data = [DefiResume(**d).model_dump(mode="json") for d in get_historique_defis(session)]
+    return _cached_json(data, 3600)
 
 
-@router.get("/{date}", response_model=DefiLancement)
+@router.get("/{date}")
 async def defi_par_date(date: str, session: Session = Depends(get_session)):
-    return _build_defi_lancement(_get_defi_or_404(session, date))
+    defi = _get_defi_or_404(session, date)
+    return _cached_json(_build_defi_lancement(defi).model_dump(mode="json"), 3600)
 
 
 @router.get("/aujourdhui/partie", response_model=PartieEtat)
@@ -75,7 +89,9 @@ async def etat_partie_date(
 
 
 @router.post("/aujourdhui/proposer", response_model=ProposerTitreResponse)
+@limiter.limit("30/minute")
 async def proposer_titre(
+    request: Request,
     body: ProposerTitreRequest,
     session_id: str = Query(...),
     session: Session = Depends(get_session),
@@ -93,7 +109,9 @@ async def proposer_titre(
 
 
 @router.post("/{date}/proposer", response_model=ProposerTitreResponse)
+@limiter.limit("30/minute")
 async def proposer_titre_date(
+    request: Request,
     date: str,
     body: ProposerTitreRequest,
     session_id: str = Query(...),
@@ -112,7 +130,9 @@ async def proposer_titre_date(
 
 
 @router.post("/aujourdhui/reveler", response_model=RevelerIndiceResponse)
+@limiter.limit("30/minute")
 async def reveler_indice_endpoint(
+    request: Request,
     body: RevelerIndiceRequest,
     session_id: str = Query(...),
     session: Session = Depends(get_session),
@@ -125,7 +145,9 @@ async def reveler_indice_endpoint(
 
 
 @router.post("/{date}/reveler", response_model=RevelerIndiceResponse)
+@limiter.limit("30/minute")
 async def reveler_indice_date(
+    request: Request,
     date: str,
     body: RevelerIndiceRequest,
     session_id: str = Query(...),

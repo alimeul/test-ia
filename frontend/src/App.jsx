@@ -85,22 +85,25 @@ function App() {
     <main className="app">
       <header className="header">
         <h1>Wikidle</h1>
-        <nav className="nav">
+        <nav className="nav" aria-label="Navigation principale">
           <button
             className={`nav-btn${page === PAGES.PLAY ? " active" : ""}`}
             onClick={() => setPage(PAGES.PLAY)}
+            aria-current={page === PAGES.PLAY ? "page" : undefined}
           >
             Jouer
           </button>
           <button
             className={`nav-btn${page === PAGES.HISTORY ? " active" : ""}`}
             onClick={() => setPage(PAGES.HISTORY)}
+            aria-current={page === PAGES.HISTORY ? "page" : undefined}
           >
             Historique
           </button>
           <button
             className={`nav-btn${page === PAGES.STATS ? " active" : ""}`}
             onClick={() => setPage(PAGES.STATS)}
+            aria-current={page === PAGES.STATS ? "page" : undefined}
           >
             Statistiques
           </button>
@@ -129,7 +132,7 @@ function App() {
               <ArticleView texte={defi.texte_caviarde} />
 
               {indicesText && (
-                <div className="indice-box">
+                <div className="indice-box" aria-live="polite" aria-atomic="true">
                   <strong>Indice :</strong> {indicesText}
                 </div>
               )}
