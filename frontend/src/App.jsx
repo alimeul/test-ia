@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
   fetchDefi,
+  fetchHistorique,
   fetchPartie,
   proposerTitre,
   revelerIndice,
@@ -26,6 +27,11 @@ function App() {
   const [motsTitre, setMotsTitre] = useState([]);
   const [motsTitreTrouves, setMotsTitreTrouves] = useState([]);
   const [propositions, setPropositions] = useState([]);
+  const [historique, setHistorique] = useState([]);
+
+  useEffect(() => {
+    fetchHistorique().then(setHistorique).catch(() => {});
+  }, []);
 
   const refreshPartie = useCallback(() => {
     fetchPartie(defiDate)
@@ -104,10 +110,17 @@ function App() {
     setPage(PAGES.PLAY);
   }
 
+  function goToDate(delta) {
+    const idx = historique.findIndex((h) => h.date === (defiDate ?? historique[historique.length - 1]?.date));
+    const next = historique[idx + delta];
+    if (next) loadDefi(next.date);
+  }
+
   const isToday = !defiDate;
   const titreProgress = motsTitre.length > 0
     ? `${motsTitreTrouves.length}/${motsTitre.length}`
     : null;
+  const currentIdx = historique.findIndex((h) => h.date === (defiDate ?? historique[historique.length - 1]?.date));
 
   return (
     <main className="app">
@@ -148,14 +161,37 @@ function App() {
           {error && <p className="error">{error}</p>}
           {defi && (
             <>
-              <p className="defi-date">
-                {isToday ? "Défi du jour" : `Défi du ${defiDate}`}
-                {defi.difficulte?.score != null && (
-                  <span className="difficulty">
-                    Difficulté : {Number(defi.difficulte.score).toFixed(1)}/10
-                  </span>
-                )}
-              </p>
+              <div className="date-nav">
+                <button
+                  className="btn btn-nav"
+                  disabled={currentIdx <= 0}
+                  onClick={() => goToDate(-1)}
+                  aria-label="Jour précédent"
+                >
+                  ‹
+                </button>
+                <div className="date-picker">
+                  {historique.map((h) => (
+                    <button
+                      key={h.date}
+                      className={`date-dot${h.date === (defiDate ?? historique.at(-1)?.date) ? " active" : ""}`}
+                      onClick={() => loadDefi(h.date)}
+                      aria-label={`Défi du ${h.date}`}
+                      title={h.date}
+                    >
+                      {h.date.slice(5)}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="btn btn-nav"
+                  disabled={currentIdx >= historique.length - 1}
+                  onClick={() => goToDate(1)}
+                  aria-label="Jour suivant"
+                >
+                  ›
+                </button>
+              </div>
 
               {titreProgress && !partie?.termine && (
                 <div className="titre-progress" role="status" aria-live="polite">
