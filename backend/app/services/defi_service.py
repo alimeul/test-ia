@@ -89,6 +89,31 @@ def _mots_dans_texte(texte_caviarde_json: str, mot: str) -> list[str]:
     return trouves
 
 
+def _compter_occurrences(texte_caviarde_json: str, mot: str) -> int:
+    data = json.loads(texte_caviarde_json)
+    mot_low = mot.lower().strip()
+    count = 0
+    for t in data["tokens"]:
+        if not t["masque"]:
+            continue
+        t_low = t["texte"].lower()
+        if t_low == mot_low or (len(mot_low) >= 3 and mot_low in t_low):
+            count += 1
+    return count
+
+
+def _construire_propositions(partie: Partie, texte_caviarde_json: str) -> list[dict[str, Any]]:
+    props: list[dict] = json.loads(partie.mots_proposes)
+    mots_reveles_set = {m.lower() for m in json.loads(partie.mots_reveles)}
+    result = []
+    for p in props:
+        mot = p["mot"]
+        trouve = mot.lower() in mots_reveles_set
+        nb_occ = _compter_occurrences(texte_caviarde_json, mot) if trouve else 0
+        result.append({"mot": mot, "trouve": trouve, "nb_occurrences": nb_occ})
+    return result
+
+
 def check_answer(
     session: Session,
     defi: Defi,
@@ -111,6 +136,12 @@ def check_answer(
 
     mots_titre = _extraire_mots_titre(article.titre)
     mot_propre = mot_propose.strip()
+
+    # Track this proposal
+    props: list[dict] = json.loads(partie.mots_proposes)
+    if mot_propre.lower() not in {p["mot"].lower() for p in props}:
+        props.append({"mot": mot_propre})
+    partie.mots_proposes = json.dumps(props, ensure_ascii=False)
 
     # Find matching tokens in text
     mots_trouves = _mots_dans_texte(defi.texte_caviarde, mot_propre)
@@ -143,6 +174,7 @@ def check_answer(
         session.refresh(partie)
 
         texte_mis_a_jour = reconstruire_texte(defi.texte_caviarde, mots_reveles)
+        propositions = _construire_propositions(partie, defi.texte_caviarde)
 
         return {
             "correct": all_found,
@@ -153,6 +185,7 @@ def check_answer(
             "texte_mis_a_jour": texte_mis_a_jour,
             "mots_titre": mots_titre,
             "mots_titre_trouves": mots_titre_trouves,
+            "propositions": propositions,
         }
 
     # Word not found in text — costs an attempt
@@ -167,6 +200,7 @@ def check_answer(
 
     reveles_set = {m.lower() for m in json.loads(partie.mots_reveles)}
     mots_titre_trouves = [mt for mt in mots_titre if mt.lower() in reveles_set]
+    propositions = _construire_propositions(partie, defi.texte_caviarde)
 
     return {
         "correct": False,
@@ -177,6 +211,7 @@ def check_answer(
         "texte_mis_a_jour": None,
         "mots_titre": mots_titre,
         "mots_titre_trouves": mots_titre_trouves,
+        "propositions": propositions,
     }
 
 
@@ -240,6 +275,7 @@ def get_partie_etat(session: Session, defi: Defi, session_id: str) -> dict[str, 
     mots_reveles = json.loads(partie.mots_reveles)
     reveles_set = {m.lower() for m in mots_reveles}
     mots_titre_trouves = [mt for mt in mots_titre if mt.lower() in reveles_set]
+    propositions = _construire_propositions(partie, defi.texte_caviarde) if article else []
     return {
         "essais_effectues": partie.essais_effectues,
         "essais_restants": max(0, partie.max_essais - partie.essais_effectues),
@@ -251,4 +287,5 @@ def get_partie_etat(session: Session, defi: Defi, session_id: str) -> dict[str, 
         "mots_reveles": mots_reveles,
         "mots_titre": mots_titre,
         "mots_titre_trouves": mots_titre_trouves,
+        "propositions": propositions,
     }

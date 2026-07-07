@@ -65,6 +65,17 @@ body {
   border-radius: 999px;
 }
 
+.game-area {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.game-main {
+  flex: 1;
+  min-width: 0;
+}
+
 .article-view {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -74,6 +85,69 @@ body {
   line-height: 1.8;
   max-height: 50vh;
   overflow-y: auto;
+}
+
+.word-sidebar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  min-width: 160px;
+  max-width: 220px;
+  max-height: 50vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.word-sidebar h3 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.word-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.word-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.word-item.found {
+  background: #1b4332;
+  color: #95d5b2;
+}
+
+.word-item.miss {
+  background: #3e1a1a;
+  color: #e5989b;
+}
+
+.word-occ {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+@media (max-width: 640px) {
+  .game-area {
+    flex-direction: column;
+  }
+  .word-sidebar {
+    max-width: 100%;
+    min-width: 100%;
+  }
 }
 
 .article-paragraph {

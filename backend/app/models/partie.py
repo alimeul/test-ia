@@ -15,4 +15,5 @@ class Partie(SQLModel, table=True):
     termine: bool = Field(default=False)
     score: int = Field(default=0)
     mots_reveles: str = Field(default="[]")  # JSON list of words revealed by guessing
+    mots_proposes: str = Field(default="[]")  # JSON list of all proposed words [{mot, trouve}]
     date_partie: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

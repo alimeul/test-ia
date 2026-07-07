@@ -137,6 +137,7 @@ async def proposer_titre(
         texte_mis_a_jour=resultat.get("texte_mis_a_jour"),
         mots_titre=resultat.get("mots_titre", []),
         mots_titre_trouves=resultat.get("mots_titre_trouves", []),
+        propositions=resultat.get("propositions", []),
     )
 
 
@@ -162,6 +163,7 @@ async def proposer_titre_date(
         texte_mis_a_jour=resultat.get("texte_mis_a_jour"),
         mots_titre=resultat.get("mots_titre", []),
         mots_titre_trouves=resultat.get("mots_titre_trouves", []),
+        propositions=resultat.get("propositions", []),
     )
 
 

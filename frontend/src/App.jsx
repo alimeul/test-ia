@@ -25,12 +25,14 @@ function App() {
   const [reponse, setReponse] = useState(null);
   const [motsTitre, setMotsTitre] = useState([]);
   const [motsTitreTrouves, setMotsTitreTrouves] = useState([]);
+  const [propositions, setPropositions] = useState([]);
 
   const refreshPartie = useCallback(() => {
     fetchPartie(defiDate)
       .then((p) => {
         if (p.mots_titre) setMotsTitre(p.mots_titre);
         if (p.mots_titre_trouves) setMotsTitreTrouves(p.mots_titre_trouves);
+        if (p.propositions) setPropositions(p.propositions);
         if (p.texte_mis_a_jour) {
           setDefi((prev) => ({ ...prev, texte_caviarde: p.texte_mis_a_jour }));
         }
@@ -72,6 +74,7 @@ function App() {
     const resultat = await proposerTitre(mot, defiDate);
     if (resultat.mots_titre) setMotsTitre(resultat.mots_titre);
     if (resultat.mots_titre_trouves) setMotsTitreTrouves(resultat.mots_titre_trouves);
+    if (resultat.propositions) setPropositions(resultat.propositions);
     if (resultat.texte_mis_a_jour) {
       setDefi((prev) => ({ ...prev, texte_caviarde: resultat.texte_mis_a_jour }));
     }
@@ -176,7 +179,24 @@ function App() {
                 </div>
               )}
 
-              <ArticleView texte={defi.texte_caviarde} />
+              <div className="game-area">
+                <div className="game-main">
+                  <ArticleView texte={defi.texte_caviarde} />
+                </div>
+                {propositions.length > 0 && (
+                  <aside className="word-sidebar" aria-label="Mots proposés">
+                    <h3>Mots proposés</h3>
+                    <ul className="word-list">
+                      {propositions.map((p, i) => (
+                        <li key={i} className={`word-item${p.trouve ? " found" : " miss"}`}>
+                          <span className="word-text">{p.mot}</span>
+                          <span className="word-occ">{p.nb_occurrences > 0 ? `×${p.nb_occurrences}` : "✗"}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </aside>
+                )}
+              </div>
 
               {indicesText && (
                 <div className="indice-box" aria-live="polite" aria-atomic="true">

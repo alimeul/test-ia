@@ -20,6 +20,12 @@ class ProposerTitreRequest(BaseModel):
     titre_propose: str
 
 
+class Proposition(BaseModel):
+    mot: str
+    trouve: bool
+    nb_occurrences: int
+
+
 class ProposerTitreResponse(BaseModel):
     correct: bool
     essais_restants: int
@@ -29,6 +35,7 @@ class ProposerTitreResponse(BaseModel):
     texte_mis_a_jour: str | None = None
     mots_titre: list[str] = []
     mots_titre_trouves: list[str] = []
+    propositions: list[Proposition] = []
 
 
 class RevelerIndiceRequest(BaseModel):
@@ -52,4 +59,5 @@ class PartieEtat(BaseModel):
     mots_reveles: list[str] = []
     mots_titre: list[str] = []
     mots_titre_trouves: list[str] = []
+    propositions: list[Proposition] = []
     texte_mis_a_jour: str | None = None

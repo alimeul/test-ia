@@ -16,11 +16,11 @@ except ImportError:
 _MASK_CHAR = "\u2588"
 
 _POS_GRAMMATICAUX: frozenset[str] = frozenset({
-    "DET", "ADP", "CCONJ", "SCONJ", "PRON", "AUX", "PART", "INTJ", "NUM",
+    "DET", "ADP", "CCONJ", "SCONJ", "PRON", "AUX", "PART", "INTJ",
 })
 
 _POS_PORTEURS: frozenset[str] = frozenset({
-    "NOUN", "PROPN", "VERB", "ADJ", "ADV",
+    "NOUN", "PROPN", "VERB", "ADJ", "ADV", "NUM",
 })
 
 _PRIORITE_POS: dict[str, int] = {
