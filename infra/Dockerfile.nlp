@@ -1,0 +1,29 @@
+FROM python:3.14-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY nlp-pipeline/pyproject.toml nlp-pipeline/ .
+RUN pip install --no-cache-dir -e .
+
+FROM python:3.14-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    APP_HOME=/app
+
+RUN groupadd -r app && useradd -r -g app -d "$APP_HOME" -s /bin/false app \
+    && mkdir -p "$APP_HOME" && chown app:app "$APP_HOME"
+
+WORKDIR $APP_HOME
+
+COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+COPY nlp-pipeline/ .
+
+USER app
+
+ENTRYPOINT ["python", "-m", "pipeline"]

@@ -1,0 +1,57 @@
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # - shared_data:/data
+      - backend_media:/app/media
+    networks:
+      - wikidle
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - wikidle
+    restart: unless-stopped
+
+  nlp-pipeline:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.nlp
+    profiles:
+      - manual
+    env_file:
+      - .env
+    volumes:
+      # - shared_data:/data
+      - backend_media:/app/media
+    networks:
+      - wikidle
+    restart: no
+
+networks:
+  wikidle:
+    driver: bridge
+
+volumes:
+  backend_media:
+  # shared_data:
